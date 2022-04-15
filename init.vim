@@ -1,4 +1,3 @@
-" this will install vim-plug if not installed
 if empty(glob('~/.config/nvim/autoload/plug.vim'))
     silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
         \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
@@ -30,7 +29,7 @@ set splitright splitbelow
 set list lcs=tab:\¦\      "(here is a space)
 let &t_SI = "\e[6 q"      " Make cursor a line in insert
 let &t_EI = "\e[2 q"      " Make cursor a line in insert
-
+ 
 call plug#begin()
 " here you'll add all the plugins needed
 Plug 'jiangmiao/auto-pairs' "this will auto close ( [ {
@@ -52,6 +51,10 @@ Plug 'haishanh/night-owl.vim'
 Plug 'Mofiqul/dracula.nvim'
 Plug 'hoob3rt/lualine.nvim'
 Plug 'kyazdani42/nvim-web-devicons'
+Plug 'scrooloose/nerdtree'
+Plug 'mattn/emmet-vim'
+Plug 'watzon/vim-edge-template'
+Plug 'ms-jpq/coq_nvim', {'branch': 'coq'}
 call plug#end()
 
 " Use <Tab> and <S-Tab> to navigate through popup menu
@@ -69,6 +72,15 @@ let g:gruvbox_material_background = 'hard'
 syntax enable
 colorscheme night-owl
 
+let g:user_emmet_leader_key=','
+
+
+" Using Lua functions
+nnoremap <leader>f <cmd>lua require('telescope.builtin').find_files()<cr>
+nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
+nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
+
 lua << EOF
 require('lualine').setup{
   options = {
@@ -77,13 +89,14 @@ require('lualine').setup{
   }
 }
 
-local nvim_lsp = require('lspconfig')
+local nvim_lsp = require 'lspconfig'
+local coq = require "coq"
 local saga = require 'lspsaga'
 saga.init_lsp_saga {
   border_style = "round",
 }
 
-nvim_lsp.diagnosticls.setup {
+nvim_lsp.diagnosticls.setup(coq.lsp_ensure_capabilities ({
   on_attach = on_attach,
   filetypes = { 'javascript', 'javascriptreact', 'json', 'typescript', 'typescriptreact', 'css', 'less', 'scss', 'markdown', 'pandoc' },
   init_options = {
@@ -92,7 +105,7 @@ nvim_lsp.diagnosticls.setup {
         command = 'eslint_d',
         rootPatterns = { '.git' },
         debounce = 100,
-        args = { '--stdin', '--stdin-filename', '%filepath', '--format', 'json' },
+        args = { '--stdin', '--stdin-filename', '%filepath', '--format',  'json' },
         sourceName = 'eslint_d',
         parseJson = {
           errorsRoot = '[0].messages',
@@ -118,7 +131,7 @@ nvim_lsp.diagnosticls.setup {
     formatters = {
       eslint_d = {
         command = 'eslint_d',
-        args = { '--stdin', '--stdin-filename', '%filename', '--fix-to-stdout' },
+        args = { '--stdin', '--stdin-filename', '%filename', '--fix', '--fix-to-stdout' },
         rootPatterns = { '.git' },
       },
       prettier = {
@@ -139,7 +152,8 @@ nvim_lsp.diagnosticls.setup {
       markdown = 'prettier',
     }
   }
-}
+})
+)
 
 local on_attach = function(client, bufnr)
 	local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
@@ -181,9 +195,7 @@ local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
 parser_config.tsx.used_by = { "javascript", "typescript.tsx" }
 
 nvim_lsp.tsserver.setup {
-   on_attach = on_attach
+   on_attach = on_attach,
 }
-
-
-
 EOF
+
